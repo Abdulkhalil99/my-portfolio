@@ -1,0 +1,132 @@
+// ============================================================
+// PRISMA SCHEMA
+// 
+// This file defines your database structure.
+// Think of it like a blueprint for your database.
+//
+// After changing this file, run:
+//   npx prisma migrate dev --name describe-your-change
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// PROJECT TABLE
+// Stores your portfolio projects
+// ============================================================
+model Project {
+  // id: auto-generated unique identifier
+  // @default(cuid()) = generates IDs like "clx1234abc"
+  // Better than numbers because:
+  //   - unique across all tables
+  //   - hard to guess (security)
+  //   - works in distributed systems
+  id          String   @id @default(cuid())
+
+  title       String
+  description String   @db.Text
+  // @db.Text = allows very long text (vs String which is VARCHAR(191))
+
+  // String[] = array of strings (PostgreSQL supports this)
+  // ["Next.js", "TypeScript", "Node.js"]
+  techStack   String[]
+
+  githubUrl   String?
+  // The ? means this field is OPTIONAL (can be null)
+
+  liveUrl     String?
+  imageUrl    String?
+
+  featured    Boolean  @default(false)
+  // @default(false) = if you do not specify, it will be false
+
+  gradient    String   @default("from-violet-500/20 to-blue-500/20")
+  category    String   @default("Full-Stack")
+
+  // Order for display (lower number = shown first)
+  order       Int      @default(0)
+
+  // Soft delete — do not actually delete, just mark as deleted
+  // Why? So you can recover data if you make a mistake
+  deletedAt   DateTime?
+
+  // Timestamps — Prisma fills these automatically
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // @updatedAt = Prisma updates this every time you save
+
+  // @@map = actual table name in PostgreSQL
+  // By default Prisma uses "Project" — we use snake_case
+  @@map("projects")
+}
+
+// ============================================================
+// CONTACT MESSAGE TABLE
+// Stores messages sent through your contact form
+// ============================================================
+model ContactMessage {
+  id      String @id @default(cuid())
+
+  name    String
+  email   String
+  subject String @default("No subject")
+  message String @db.Text
+
+  // Has this message been read by you?
+  read    Boolean @default(false)
+
+  // Has a reply been sent?
+  replied Boolean @default(false)
+
+  // IP address of sender (for spam protection)
+  // Optional — privacy consideration
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_messages")
+}
+
+// ============================================================
+// BLOG POST TABLE
+// For your blog (Step 12)
+// ============================================================
+model BlogPost {
+  id        String   @id @default(cuid())
+
+  title     String
+  // slug = URL-friendly version of title
+  // "My First Post" → "my-first-post"
+  // @unique = no two posts can have same slug
+  slug      String   @unique
+
+  excerpt   String   @db.Text
+  content   String   @db.Text
+
+  tags      String[]
+
+  // Only published posts are shown to visitors
+  published Boolean  @default(false)
+
+  // Estimated reading time in minutes
+  readTime  Int      @default(5)
+
+  // SEO fields
+  metaTitle       String?
+  metaDescription String?
+
+  coverImage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("blog_posts")
+}
